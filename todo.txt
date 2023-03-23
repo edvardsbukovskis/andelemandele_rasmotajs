@@ -1,5 +1,5 @@
-Add appending writing to error log
-Add datetime stamp in error log.txt and result.txt
+Done 23.03.2023: Add appending writing to error log
+Done 23.03.2023: Add datetime stamp in error log.txt and result.txt
 Export data to csv
 Export data to json
 Make exceptions more specific 

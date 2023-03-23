@@ -63,8 +63,8 @@ def get_category(all_links):
             category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
             category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
         except:
-            with open('error_log.txt', 'w', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_category(): {link} \n Runtime: {datetime.now()-start_time} \n -----------------------------\n")
+            with open('error_log.txt', 'a', encoding="utf-8") as f:
+                f.write(f"Local Error occured at get_category(): {link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()} -----------------------------\n")
             pass
         try:
             category = f"{category1} / {category2}"
@@ -76,14 +76,14 @@ def get_category(all_links):
             counter += 1
             print(f"counter: {counter}\n")
         except:
-            with open('error_log.txt', 'w', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_category(): {link} \n Tried to get categories: {category1} and {category2} \n Runtime: {datetime.now()-start_time} -----------------------------\n")
+            with open('error_log.txt', 'a', encoding="utf-8") as f:
+                f.write(f"Local Error occured at get_category(): {link}\nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()} -----------------------------\n")
             pass
         driver.delete_all_cookies()
     print(f"{counter} items added in total\n")
     return categories
 
-#----------------------CATEGORY SEARHING(__main__)----------------------
+#----------------------(__main__)----------------------
 if __name__ == "__main__":
     all_links=[]
     start_time = datetime.now()
@@ -98,5 +98,5 @@ if __name__ == "__main__":
         with open('result.txt', 'w', encoding="utf-8") as f:
             f.write(f"{str(categories)}\n Runtime: {datetime.now() - start_time}")
     except:
-        with open('error_log.txt', 'w', encoding="utf-8") as f:
-                f.write(f"Global Error: Error occured at: {datetime.now() - start_time}")
+        with open('error_log.txt', 'a', encoding="utf-8") as f:
+                f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}-----------------------------\n")
