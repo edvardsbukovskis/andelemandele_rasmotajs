@@ -1,3 +1,0 @@
-Local Error occured at get_category(): https://www.andelemandele.lv/perle/3146985/eleganta-virsjaka/ 
- Runtime: 3:22:40.898143 
- -----------------------------
