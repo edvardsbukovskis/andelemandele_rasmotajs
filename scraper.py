@@ -89,7 +89,7 @@ def get_category(all_links):
     print(f"{counter} items added in total\n")
     return categories
 
-#----------------------CATEGORY SEARHING----------------------
+#----------------------MAIN----------------------
 try:
     all_links = get_all_links()
     categories = get_category(all_links)
