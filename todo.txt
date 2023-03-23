@@ -1,0 +1,5 @@
+Add appending writing to error log
+Add datetime stamp in error log.txt and result.txt
+Export data to csv
+Export data to json
+Make exceptions more specific 
