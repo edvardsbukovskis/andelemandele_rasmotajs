@@ -1,4 +1,4 @@
-Done 23.03.2023: Add appending writing to error log
+Done 23.03.2023: Add appending writing to error log and results
 Done 23.03.2023: Add datetime stamp in error log.txt and result.txt
 Export data to csv
 Export data to json

@@ -95,8 +95,8 @@ if __name__ == "__main__":
         categories = get_category(all_links)
         driver.close()
 
-        with open('result.txt', 'w', encoding="utf-8") as f:
-            f.write(f"{str(categories)}\n Runtime: {datetime.now() - start_time}")
+        with open('result.txt', 'a', encoding="utf-8") as f:
+            f.write(f"{str(categories)}\n Runtime: {datetime.now() - start_time}\nDatetime: {datetime.now()}-----------------------------\n")
     except:
         with open('error_log.txt', 'a', encoding="utf-8") as f:
                 f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}-----------------------------\n")
