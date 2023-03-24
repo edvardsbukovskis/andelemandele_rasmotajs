@@ -3,3 +3,5 @@ Done 23.03.2023: Add datetime stamp in error log.txt and result.txt
 Export data to csv
 Export data to json
 Make exceptions more specific 
+Scrape price of each sold item and save it as a list in subdictionary
+Calculate average price per category
