@@ -64,7 +64,7 @@ def get_category(all_links):
             category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
         except:
             with open('error_log.txt', 'a', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_category(): {link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()} -----------------------------\n")
+                f.write(f"Local Error occured at get_category(): {link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
             pass
         try:
             category = f"{category1} / {category2}"
@@ -77,7 +77,7 @@ def get_category(all_links):
             print(f"counter: {counter}\n")
         except:
             with open('error_log.txt', 'a', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_category(): {link}\nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()} -----------------------------\n")
+                f.write(f"Local Error occured at get_category(): {link}\nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
             pass
         driver.delete_all_cookies()
     print(f"{counter} items added in total\n")
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         driver.close()
 
         with open('result.txt', 'a', encoding="utf-8") as f:
-            f.write(f"{str(categories)}\n Runtime: {datetime.now() - start_time}\nDatetime: {datetime.now()}-----------------------------\n")
+            f.write(f"{str(categories)}\n Runtime: {datetime.now() - start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
     except:
         with open('error_log.txt', 'a', encoding="utf-8") as f:
-                f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}-----------------------------\n")
+                f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
