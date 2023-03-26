@@ -46,7 +46,6 @@ def get_all_links():
         print(f"All items added, pages:{pages} total items:{len(all_links)}\n")
         
         driver.delete_all_cookies()
-
     return all_links
 
 def get_category(all_links):
@@ -96,7 +95,7 @@ if __name__ == "__main__":
         driver.close()
 
         with open('result.txt', 'a', encoding="utf-8") as f:
-            f.write(f"{str(categories)}\n Runtime: {datetime.now() - start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
+            f.write(f"{str(categories)}\n Runtime: {datetime.now() - start_time}\nSrarttime: {start_time}\nEndtime: {datetime.now()}\n-----------------------------\n")
     except:
         with open('error_log.txt', 'a', encoding="utf-8") as f:
                 f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
