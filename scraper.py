@@ -60,8 +60,8 @@ def get_sold_product_data(all_links):
             price = float(soup.find("span", class_="product__price old-price").text.split(' ')[0])
         except:
             with open('error_log.txt', 'a', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_sold_product_data()->category/price: {category1}, {category2}, {price} {link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
-            pass
+                f.write(f"Local Error occured at get_sold_product_data():{link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
+            continue
         try:
             category = f"{category1} | {category2}"
             if category in data["categories"].keys():
@@ -76,7 +76,7 @@ def get_sold_product_data(all_links):
         except:
             with open('error_log.txt', 'a', encoding="utf-8") as f:
                 f.write(f"Local Error occured at get_sold_product_data()->saving to categories: {link}\nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
-            pass
+            continue
         driver.delete_all_cookies()
     print(f"{counter} items added in total\n")
     return data

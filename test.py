@@ -19,7 +19,7 @@ def get_number_of_pages():
 #Iterate through all pages of the website
 def get_all_links():
     pages = 0
-    for i in range(1):
+    for i in range(get_number_of_pages()):
         #Create selenium driver for chrome that accesses website "www.andelemandele.lv"
         driver.get(f"https://www.andelemandele.lv/perles/#order:actual/sold:1/page:{i}")
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight - (document.body.scrollHeight - 1))")
@@ -33,8 +33,7 @@ def get_all_links():
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         products = soup.find_all("article", class_="product-card no-user inactive applications thumbnail-ready")
 
-        #Get only figure tag
-        all_items = []
+        #Get all links of sold items
         for product in products:
             item = product.find("figure")
             link = item.find("a")
@@ -52,17 +51,12 @@ def get_sold_product_data(all_links):
     for link in all_links:
         driver.get(link)
         time.sleep(0.5)
-
         #Scrape the category data from the item
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-        try:
-            category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
-            category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
-            price = float(soup.find("span", class_="product__price old-price").text.split(' ')[0])
-        except:
-            with open('error_log.txt', 'a', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_sold_product_data()->category/price: {category1}, {category2}, {price} {link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
-            pass
+        category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
+        category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
+        price = float(soup.find("span", class_="product__price old-price").text.split(' ')[0])
+        
         try:
             category = f"{category1} | {category2}"
             if category in data["categories"].keys():
@@ -99,10 +93,11 @@ if __name__ == "__main__":
         data["Runtime"] = str(datetime.now() - start_time)
         data["Starttime"] = str(start_time)
         data["Endtime"] = str(datetime.now())
-        
         json_obj = json.dumps(data, indent=1, ensure_ascii=False)
+
         with open('result.json', 'a', encoding="utf-8") as f:
             f.write(json_obj)
+    
     except:
         with open('error_log.txt', 'a', encoding="utf-8") as f:
             f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
