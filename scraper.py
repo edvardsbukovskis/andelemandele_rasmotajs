@@ -68,6 +68,7 @@ def get_category(all_links):
                 f.write(f"Local Error occured at get_category(): {link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
             pass
         try:
+            #Create dictionary hierarchy
             category = f"{category1} | {category2}"
             if category in categories.keys():
                 categories[category]["counter"] += 1
