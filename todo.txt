@@ -1,6 +1,6 @@
 Done: 23.03.2023: Add appending writing to error log and results
 Done: 23.03.2023: Add datetime stamp in error log.txt and result.txt
-Make export data save to .json file with json format
+Done: Make export data save to .json file with json format
 Export data to csv
 Export data to json
 Make exceptions more specific 
