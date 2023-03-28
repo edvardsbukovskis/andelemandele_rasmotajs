@@ -33,8 +33,7 @@ def get_all_links():
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         products = soup.find_all("article", class_="product-card no-user inactive applications thumbnail-ready")
 
-        #Get only figure tag
-        all_items = []
+        #Get all links of sold items
         for product in products:
             item = product.find("figure")
             link = item.find("a")
