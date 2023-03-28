@@ -99,11 +99,10 @@ if __name__ == "__main__":
         data["Runtime"] = str(datetime.now() - start_time)
         data["Starttime"] = str(start_time)
         data["Endtime"] = str(datetime.now())
+        
         json_obj = json.dumps(data, indent=1, ensure_ascii=False)
-
         with open('result.json', 'a', encoding="utf-8") as f:
             f.write(json_obj)
-    
     except:
         with open('error_log.txt', 'a', encoding="utf-8") as f:
             f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
