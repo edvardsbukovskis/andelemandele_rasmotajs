@@ -1,10 +1,10 @@
 Done: 23.03.2023: Add appending writing to error log and results
 Done: 23.03.2023: Add datetime stamp in error log.txt and result.txt
-Done: Make export data save to .json file with json format
+Done: 27.03.2023: Make export data save to .json file with json format
 Export data to csv
 Export data to json
 Make exceptions more specific 
-Done: Change hierarchy of dictionary to look like this:
+Done: 28.03.2023: Change hierarchy of dictionary to look like this:
         categories:{"cat1":{count:int, price:list}, "cat2":{count":int, price:list}}, Runtime:time:datetime, Datetime:time:datetime, Starttime:time:datetime
-Done: Scrape price of each sold item and save it as a list in subdictionary
+Done: 27.03.2023 Scrape price of each sold item and save it as a list in subdictionary
 Calculate average price per category
