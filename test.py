@@ -19,7 +19,7 @@ def get_number_of_pages():
 #Iterate through all pages of the website
 def get_all_links():
     pages = 0
-    for i in range(get_number_of_pages()):
+    for i in range(1):
         #Create selenium driver for chrome that accesses website "www.andelemandele.lv"
         driver.get(f"https://www.andelemandele.lv/perles/#order:actual/sold:1/page:{i}")
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight - (document.body.scrollHeight - 1))")
@@ -51,7 +51,7 @@ def get_all_links():
 
 def get_sold_product_data(all_links):
     counter = 0
-    data = {}
+    data = {"categories":{}}
     #iterate each link and enter items page
     for link in all_links:
         driver.get(link)
@@ -62,10 +62,10 @@ def get_sold_product_data(all_links):
         try:
             category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
             category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
-            price = int(soup.find("span", class_="product__price old-price").text.split(' ')[0])
+            price = float(soup.find("span", class_="product__price old-price").text.split(' ')[0])
         except:
             with open('error_log.txt', 'a', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_sold_product_data(): {link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
+                f.write(f"Local Error occured at get_sold_product_data()->category/price: {category1}, {category2}, {price} {link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
             pass
         try:
             category = f"{category1} | {category2}"
@@ -80,7 +80,7 @@ def get_sold_product_data(all_links):
             print(f"counter: {counter}\n")
         except:
             with open('error_log.txt', 'a', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_sold_product_data(): {link}\nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
+                f.write(f"Local Error occured at get_sold_product_data()->saving to categories: {link}\nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
             pass
         driver.delete_all_cookies()
     print(f"{counter} items added in total\n")

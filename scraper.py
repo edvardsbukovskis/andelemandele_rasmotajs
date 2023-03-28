@@ -19,7 +19,7 @@ def get_number_of_pages():
 #Iterate through all pages of the website
 def get_all_links():
     pages = 0
-    for i in range(1):
+    for i in range(get_number_of_pages()):
         #Create selenium driver for chrome that accesses website "www.andelemandele.lv"
         driver.get(f"https://www.andelemandele.lv/perles/#order:actual/sold:1/page:{i}")
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight - (document.body.scrollHeight - 1))")
@@ -49,9 +49,9 @@ def get_all_links():
         driver.delete_all_cookies()
     return all_links
 
-def get_category(all_links):
+def get_sold_product_data(all_links):
     counter = 0
-    categories = {}
+    data = {"categories":{}}
     #iterate each link and enter items page
     for link in all_links:
         driver.get(link)
@@ -62,30 +62,29 @@ def get_category(all_links):
         try:
             category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
             category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
-            price = int(soup.find("span", class_="product__price old-price").text.split(' ')[0])
+            price = float(soup.find("span", class_="product__price old-price").text.split(' ')[0])
         except:
             with open('error_log.txt', 'a', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_category(): {link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
+                f.write(f"Local Error occured at get_sold_product_data()->category/price: {category1}, {category2}, {price} {link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
             pass
         try:
-            #Create dictionary hierarchy
             category = f"{category1} | {category2}"
-            if category in categories.keys():
-                categories[category]["counter"] += 1
-                categories[category]["category_prices"].append(price)
+            if category in data["categories"].keys():
+                data["categories"][category]["counter"] += 1
+                data["categories"][category]["category_prices"].append(price)
             else:
-                categories[category] = {"counter":1, "category_prices":[price]}
+                data["categories"][category] = {"counter":1, "category_prices":[price]}
                 
             print(f"category: {category} added\n")
             counter += 1
             print(f"counter: {counter}\n")
         except:
             with open('error_log.txt', 'a', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_category(): {link}\nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
+                f.write(f"Local Error occured at get_sold_product_data()->saving to categories: {link}\nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
             pass
         driver.delete_all_cookies()
     print(f"{counter} items added in total\n")
-    return categories
+    return data
 
 #----------------------(__main__)----------------------
 if __name__ == "__main__":
@@ -97,20 +96,18 @@ if __name__ == "__main__":
     
     try:
         all_links = get_all_links()
-        categories = get_category(all_links)
+        data = get_sold_product_data(all_links)
         driver.close()
         
         #serialize json for a dump
-        categories["Runtime"] = str(datetime.now() - start_time)
-        categories["Starttime"] = str(start_time)
-        categories["Endtime"] = str(datetime.now())
-        json_obj = json.dumps(categories, indent=1, ensure_ascii=False)
+        data["Runtime"] = str(datetime.now() - start_time)
+        data["Starttime"] = str(start_time)
+        data["Endtime"] = str(datetime.now())
+        json_obj = json.dumps(data, indent=1, ensure_ascii=False)
 
         with open('result.json', 'a', encoding="utf-8") as f:
             f.write(json_obj)
     
     except:
         with open('error_log.txt', 'a', encoding="utf-8") as f:
-                f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
-     
-    print(json_obj)
+            f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
