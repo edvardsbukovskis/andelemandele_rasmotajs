@@ -4,7 +4,7 @@ Make export data save to .json file with json format
 Export data to csv
 Export data to json
 Make exceptions more specific 
-Change hierarchy of dictionary to look like this:
-    categories:{"cat1":{count:int, price:list}, "cat2":{count":int, price:list}}, Runtime:time:datetime, Datetime:time:datetime, Starttime:time:datetime
+Done: Change hierarchy of dictionary to look like this:
+        categories:{"cat1":{count:int, price:list}, "cat2":{count":int, price:list}}, Runtime:time:datetime, Datetime:time:datetime, Starttime:time:datetime
 Done: Scrape price of each sold item and save it as a list in subdictionary
 Calculate average price per category
