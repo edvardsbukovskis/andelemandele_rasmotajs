@@ -10,3 +10,5 @@ Done: 27.03.2023 Scrape price of each sold item and save it as a list in subdict
 Calculate average price per category
 Collect data about void products, calculate statistics like amount and percentage to all
 Create a file that stores meta info about scrape(all items, void items, percentage...)
+Make appending categories in json file to increase the count in already written dictionary, not creating another set, meaning runtime/datetime information could be converted to metafile
+When terminating program save all info that ahs been gathered
