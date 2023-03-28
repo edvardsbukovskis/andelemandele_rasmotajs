@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
+import json
 from datetime import datetime
 import multiprocessing
 
@@ -18,7 +19,7 @@ def get_number_of_pages():
 #Iterate through all pages of the website
 def get_all_links():
     pages = 0
-    for i in range(int(get_number_of_pages())):
+    for i in range(1):
         #Create selenium driver for chrome that accesses website "www.andelemandele.lv"
         driver.get(f"https://www.andelemandele.lv/perles/#order:actual/sold:1/page:{i}")
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight - (document.body.scrollHeight - 1))")
@@ -61,16 +62,19 @@ def get_category(all_links):
         try:
             category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
             category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
+            price = int(soup.find("span", class_="product__price old-price").text.split(' ')[0])
         except:
             with open('error_log.txt', 'a', encoding="utf-8") as f:
                 f.write(f"Local Error occured at get_category(): {link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
             pass
         try:
-            category = f"{category1} / {category2}"
+            category = f"{category1} | {category2}"
             if category in categories.keys():
-                categories[category] += 1
+                categories[category]["counter"] += 1
+                categories[category]["category_prices"].append(price)
             else:
-                categories[category] = 1
+                categories[category] = {"counter":1, "category_prices":[price]}
+                
             print(f"category: {category} added\n")
             counter += 1
             print(f"counter: {counter}\n")
@@ -84,18 +88,28 @@ def get_category(all_links):
 
 #----------------------(__main__)----------------------
 if __name__ == "__main__":
-    all_links=[]
     start_time = datetime.now()
+    all_links=[]
     options = Options()
     options.headless = True
     driver = webdriver.Chrome(options=options)
+    
     try:
         all_links = get_all_links()
         categories = get_category(all_links)
         driver.close()
+        
+        #serialize json for a dump
+        categories["Runtime"] = str(datetime.now() - start_time)
+        categories["Starttime"] = str(start_time)
+        categories["Endtime"] = str(datetime.now())
+        json_obj = json.dumps(categories, indent=1, ensure_ascii=False)
 
-        with open('result.txt', 'a', encoding="utf-8") as f:
-            f.write(f"{str(categories)}\n Runtime: {datetime.now() - start_time}\nSrarttime: {start_time}\nEndtime: {datetime.now()}\n-----------------------------\n")
+        with open('result.json', 'a', encoding="utf-8") as f:
+            f.write(json_obj)
+    
     except:
         with open('error_log.txt', 'a', encoding="utf-8") as f:
                 f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
+     
+    print(json_obj)

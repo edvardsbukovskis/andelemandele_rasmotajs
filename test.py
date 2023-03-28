@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
+import json
 from datetime import datetime
 import multiprocessing
 
@@ -18,7 +19,7 @@ def get_number_of_pages():
 #Iterate through all pages of the website
 def get_all_links():
     pages = 0
-    for i in range(int(get_number_of_pages())):
+    for i in range(get_number_of_pages()):
         #Create selenium driver for chrome that accesses website "www.andelemandele.lv"
         driver.get(f"https://www.andelemandele.lv/perles/#order:actual/sold:1/page:{i}")
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight - (document.body.scrollHeight - 1))")
@@ -46,12 +47,11 @@ def get_all_links():
         print(f"All items added, pages:{pages} total items:{len(all_links)}\n")
         
         driver.delete_all_cookies()
-
     return all_links
 
-def get_category(all_links):
+def get_sold_product_data(all_links):
     counter = 0
-    categories = {}
+    data = {}
     #iterate each link and enter items page
     for link in all_links:
         driver.get(link)
@@ -62,41 +62,52 @@ def get_category(all_links):
         try:
             category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
             category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
+            price = int(soup.find("span", class_="product__price old-price").text.split(' ')[0])
         except:
-            with open('error_log.txt', 'w', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_category(): {link} \n Runtime: {datetime.now()-start_time} \n -----------------------------\n")
+            with open('error_log.txt', 'a', encoding="utf-8") as f:
+                f.write(f"Local Error occured at get_sold_product_data(): {link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
             pass
         try:
-            category = f"{category1} / {category2}"
-            if category in categories.keys():
-                categories[category] += 1
+            category = f"{category1} | {category2}"
+            if category in data["categories"].keys():
+                data["categories"][category]["counter"] += 1
+                data["categories"][category]["category_prices"].append(price)
             else:
-                categories[category] = 1
+                data["categories"][category] = {"counter":1, "category_prices":[price]}
+                
             print(f"category: {category} added\n")
             counter += 1
             print(f"counter: {counter}\n")
         except:
-            with open('error_log.txt', 'w', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_category(): {link} \n Tried to get categories: {category1} and {category2} \n Runtime: {datetime.now()-start_time} -----------------------------\n")
+            with open('error_log.txt', 'a', encoding="utf-8") as f:
+                f.write(f"Local Error occured at get_sold_product_data(): {link}\nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
             pass
         driver.delete_all_cookies()
     print(f"{counter} items added in total\n")
-    return categories
+    return data
 
-#----------------------CATEGORY SEARHING(__main__)----------------------
+#----------------------(__main__)----------------------
 if __name__ == "__main__":
-    all_links=[]
     start_time = datetime.now()
+    all_links=[]
     options = Options()
     options.headless = True
     driver = webdriver.Chrome(options=options)
+    
     try:
         all_links = get_all_links()
-        categories = get_category(all_links)
+        data = get_sold_product_data(all_links)
         driver.close()
+        
+        #serialize json for a dump
+        data["Runtime"] = str(datetime.now() - start_time)
+        data["Starttime"] = str(start_time)
+        data["Endtime"] = str(datetime.now())
+        json_obj = json.dumps(data, indent=1, ensure_ascii=False)
 
-        with open('result.txt', 'w', encoding="utf-8") as f:
-            f.write(f"{str(categories)}\n Runtime: {datetime.now() - start_time}")
+        with open('result.json', 'a', encoding="utf-8") as f:
+            f.write(json_obj)
+    
     except:
-        with open('error_log.txt', 'w', encoding="utf-8") as f:
-                f.write(f"Global Error: Error occured at: {datetime.now() - start_time}")
+        with open('error_log.txt', 'a', encoding="utf-8") as f:
+            f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
