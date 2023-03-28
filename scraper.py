@@ -37,10 +37,6 @@ def get_all_links():
         all_items = []
         for product in products:
             item = product.find("figure")
-            all_items.append(item)
-
-        #Get only href links
-        for item in all_items:
             link = item.find("a")
             all_links.append("https://www.andelemandele.lv"+link.get('href'))
         pages +=1
