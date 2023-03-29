@@ -132,3 +132,4 @@ if __name__ == "__main__":
     except:
         with open('error_log.txt', 'a', encoding="utf-8") as f:
             f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
+               
