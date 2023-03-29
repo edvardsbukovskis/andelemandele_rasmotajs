@@ -19,7 +19,7 @@ def get_number_of_pages():
 #Iterate through all pages of the website
 def get_all_links():
     pages = 0
-    for i in range(1):
+    for i in range(get_number_of_pages()):
         #Create selenium driver for chrome that accesses website "www.andelemandele.lv"
         driver.get(f"https://www.andelemandele.lv/perles/#order:actual/sold:1/page:{i}")
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight - (document.body.scrollHeight - 1))")
@@ -33,14 +33,9 @@ def get_all_links():
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         products = soup.find_all("article", class_="product-card no-user inactive applications thumbnail-ready")
 
-        #Get only figure tag
-        all_items = []
+        #Get all links of sold items
         for product in products:
             item = product.find("figure")
-            all_items.append(item)
-
-        #Get only href links
-        for item in all_items:
             link = item.find("a")
             all_links.append("https://www.andelemandele.lv"+link.get('href'))
         pages +=1
@@ -51,22 +46,47 @@ def get_all_links():
 
 def get_sold_product_data(all_links):
     counter = 0
-    data = {}
+    data = {"categories":{}}
     #iterate each link and enter items page
     for link in all_links:
         driver.get(link)
         time.sleep(0.5)
-
         #Scrape the category data from the item
         soup = BeautifulSoup(driver.page_source, 'html.parser')
+        category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
+        category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
+        price = float(soup.find("span", class_="product__price old-price").text.split(' ')[0])
+        
         try:
-            category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
-            category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
-            price = int(soup.find("span", class_="product__price old-price").text.split(' ')[0])
+            category = f"{category1} | {category2}"
+            if category in data["categories"].keys():
+                data["categories"][category]["counter"] += 1
+                data["categories"][category]["category_prices"].append(price)
+            else:
+                data["categories"][category] = {"counter":1, "category_prices":[price]}
+                
+            print(f"category: {category} added\n")
+            counter += 1
+            print(f"counter: {counter}\n")
         except:
             with open('error_log.txt', 'a', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_sold_product_data()->category/price finder: {link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
+                f.write(f"Local Error occured at get_sold_product_data()->saving to categories: {link}\nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
             pass
+        driver.delete_all_cookies()
+    print(f"{counter} items added in total\n")
+    return data
+
+def get_one_sold_product_data(link):
+    data = {"categories":{}}
+    driver.get(link)
+    time.sleep(0.5)
+    #Scrape the category data from the item
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
+    category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
+    price = float(soup.find("span", class_="product__price old-price").text.split(' ')[0])
+
+    try:
         category = f"{category1} | {category2}"
         if category in data["categories"].keys():
             data["categories"][category]["counter"] += 1
@@ -77,9 +97,11 @@ def get_sold_product_data(all_links):
         print(f"category: {category} added\n")
         counter += 1
         print(f"counter: {counter}\n")
-
-        driver.delete_all_cookies()
-    print(f"{counter} items added in total\n")
+    except:
+        with open('error_log.txt', 'a', encoding="utf-8") as f:
+            f.write(f"Local Error occured at get_sold_product_data()->saving to categories: {link}\nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
+        pass
+    driver.delete_all_cookies()    
     return data
 
 #----------------------(__main__)----------------------
@@ -90,15 +112,44 @@ if __name__ == "__main__":
     options.headless = True
     driver = webdriver.Chrome(options=options)
     
-    all_links = get_all_links()
-    data = get_sold_product_data(all_links)
-    driver.close()
-    
-    #serialize json for a dump
-    data["Runtime"] = str(datetime.now() - start_time)
-    data["Starttime"] = str(start_time)
-    data["Endtime"] = str(datetime.now())
-    json_obj = json.dumps(data, indent=1, ensure_ascii=False)
+    try:
+        all_links = get_all_links()
+        data = get_sold_product_data(all_links)
+        driver.close()
+        
+        #serialize json for a dump
+        data["Runtime"] = str(datetime.now() - start_time)
+        data["Starttime"] = str(start_time)
+        data["Endtime"] = str(datetime.now())
+        json_obj = json.dumps(data, indent=1, ensure_ascii=False)
 
-    with open('result.json', 'a', encoding="utf-8") as f:
-        f.write(json_obj)
+        with open('result.json', 'a', encoding="utf-8") as f:
+            f.write(json_obj)
+    
+    except:
+        with open('error_log.txt', 'a', encoding="utf-8") as f:
+            f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
+            
+"""
+    import multiprocessing as mp
+from functools import partial
+
+def processdata(data):
+    processed_data = {}
+    # Add data to processed_data dictionary
+    return processed_data
+
+def process_multiple_data(data, pool):
+    pool.map(processdata, data)
+
+def main():
+    pool = mp.Pool(mp.cpu_count())
+    data = [1, 2, 3]
+    processed_data = pool.apply(partial(process_multiple_data, data, pool))
+    pool.close()
+    pool.join()
+    return processed_data
+
+if __name__ == "__main__":
+    print(main())
+"""        
