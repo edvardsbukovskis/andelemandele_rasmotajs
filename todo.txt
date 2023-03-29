@@ -12,3 +12,4 @@ Collect data about void products, calculate statistics like amount and percentag
 Create a file that stores meta info about scrape(all items, void items, percentage...)
 Make appending categories in json file to increase the count in already written dictionary, not creating another set, meaning runtime/datetime information could be converted to metafile
 When terminating program save all info that ahs been gathered
+Add multiprocessing for faster execution
