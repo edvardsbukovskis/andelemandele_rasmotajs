@@ -7,8 +7,12 @@ from datetime import datetime
 import multiprocessing
 
 
-#Find out how many pages there are of sold items
+
 def get_number_of_pages():
+    """
+    It gets the number of pages from the website, and returns it as an integer
+    :return: The number of pages in the website.
+    """
     driver.get("https://www.andelemandele.lv/perles/#order:actual/sold:1/page:0")
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     pages = soup.find("button", class_="btn paging__btn dropdown-toggle").text.split(" ")[-1]
@@ -16,8 +20,12 @@ def get_number_of_pages():
     return int(pages)
 
 
-#Iterate through all pages of the website
 def get_all_links():
+    """
+    It creates a selenium driver for chrome that accesses website "www.andelemandele.lv" and gets all
+    links of sold items and stores them in a list.
+    :return: A list of all links of sold items
+    """
     pages = 0
     for i in range(get_number_of_pages()):
         #Create selenium driver for chrome that accesses website "www.andelemandele.lv"
@@ -45,9 +53,25 @@ def get_all_links():
     return all_links
 
 def get_sold_product_data(all_links):
+    """
+    It iterates through a list of links, enters each link, scrapes the category data from the item, and
+    saves it to a dictionary.
+    
+    :param all_links: list of links to the items
+    :return: A dictionary with the following structure:
+    {
+        "categories":{
+            "category1 | category2":{
+                "counter": int,
+                "category_prices": [float, float, float, ...]
+            },
+            "category1 | category2":{
+                "counter": int,
+                "category_prices": [float
+    """
     counter = 0
     data = {"categories":{}}
-    #iterate each link and enter items page
+
     for link in all_links:
         driver.get(link)
         time.sleep(0.5)
@@ -82,6 +106,8 @@ def get_sold_product_data(all_links):
     return data
 
 #----------------------(__main__)----------------------
+
+# The above code is a web scraper that is scraping the sold products from the website.
 if __name__ == "__main__":
     start_time = datetime.now()
     all_links=[]
