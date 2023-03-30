@@ -105,6 +105,7 @@ def get_sold_product_data(all_links):
     print(f"{counter} items added in total\n")
     return data
 
+
 #----------------------(__main__)----------------------
 
 # The above code is a web scraper that is scraping the sold products from the website.
