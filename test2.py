@@ -7,8 +7,12 @@ from datetime import datetime
 import multiprocessing
 
 
-#Find out how many pages there are of sold items
+
 def get_number_of_pages():
+    """
+    It gets the number of pages from the website, and returns it as an integer
+    :return: The number of pages in the website.
+    """
     driver.get("https://www.andelemandele.lv/perles/#order:actual/sold:1/page:0")
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     pages = soup.find("button", class_="btn paging__btn dropdown-toggle").text.split(" ")[-1]
@@ -16,10 +20,14 @@ def get_number_of_pages():
     return int(pages)
 
 
-#Iterate through all pages of the website
 def get_all_links():
+    """
+    It creates a selenium driver for chrome that accesses website "www.andelemandele.lv" and gets all
+    links of sold items and stores them in a list.
+    :return: A list of all links of sold items
+    """
     pages = 0
-    for i in range(get_number_of_pages()):
+    for i in range(1):
         #Create selenium driver for chrome that accesses website "www.andelemandele.lv"
         driver.get(f"https://www.andelemandele.lv/perles/#order:actual/sold:1/page:{i}")
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight - (document.body.scrollHeight - 1))")
@@ -45,18 +53,39 @@ def get_all_links():
     return all_links
 
 def get_sold_product_data(all_links):
+    """
+    It iterates through a list of links, enters each link, scrapes the category data from the item, and
+    saves it to a dictionary.
+    
+    :param all_links: list of links to the items
+    :return: A dictionary with the following structure:
+    {
+        "categories":{
+            "category1 | category2":{
+                "counter": int,
+                "category_prices": [float, float, float, ...]
+            },
+            "category1 | category2":{
+                "counter": int,
+                "category_prices": [float
+    """
     counter = 0
     data = {"categories":{}}
-    #iterate each link and enter items page
+
     for link in all_links:
         driver.get(link)
         time.sleep(0.5)
+
         #Scrape the category data from the item
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-        category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
-        category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
-        price = float(soup.find("span", class_="product__price old-price").text.split(' ')[0])
-        
+        try:
+            category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
+            category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
+            price = float(soup.find("span", class_="product__price old-price").text.split(' ')[0])
+        except:
+            with open('error_log.txt', 'a', encoding="utf-8") as f:
+                f.write(f"Local Error occured at get_sold_product_data():{link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
+            continue
         try:
             category = f"{category1} | {category2}"
             if category in data["categories"].keys():
@@ -71,40 +100,15 @@ def get_sold_product_data(all_links):
         except:
             with open('error_log.txt', 'a', encoding="utf-8") as f:
                 f.write(f"Local Error occured at get_sold_product_data()->saving to categories: {link}\nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
-            pass
+            continue
         driver.delete_all_cookies()
     print(f"{counter} items added in total\n")
     return data
 
-def get_one_sold_product_data(link):
-    data = {"categories":{}}
-    driver.get(link)
-    time.sleep(0.5)
-    #Scrape the category data from the item
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-    category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
-    category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
-    price = float(soup.find("span", class_="product__price old-price").text.split(' ')[0])
-
-    try:
-        category = f"{category1} | {category2}"
-        if category in data["categories"].keys():
-            data["categories"][category]["counter"] += 1
-            data["categories"][category]["category_prices"].append(price)
-        else:
-            data["categories"][category] = {"counter":1, "category_prices":[price]}
-            
-        print(f"category: {category} added\n")
-        counter += 1
-        print(f"counter: {counter}\n")
-    except:
-        with open('error_log.txt', 'a', encoding="utf-8") as f:
-            f.write(f"Local Error occured at get_sold_product_data()->saving to categories: {link}\nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
-        pass
-    driver.delete_all_cookies()    
-    return data
 
 #----------------------(__main__)----------------------
+
+# The above code is a web scraper that is scraping the sold products from the website.
 if __name__ == "__main__":
     start_time = datetime.now()
     all_links=[]
@@ -129,27 +133,4 @@ if __name__ == "__main__":
     except:
         with open('error_log.txt', 'a', encoding="utf-8") as f:
             f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
-            
-"""
-    import multiprocessing as mp
-from functools import partial
-
-def processdata(data):
-    processed_data = {}
-    # Add data to processed_data dictionary
-    return processed_data
-
-def process_multiple_data(data, pool):
-    pool.map(processdata, data)
-
-def main():
-    pool = mp.Pool(mp.cpu_count())
-    data = [1, 2, 3]
-    processed_data = pool.apply(partial(process_multiple_data, data, pool))
-    pool.close()
-    pool.join()
-    return processed_data
-
-if __name__ == "__main__":
-    print(main())
-"""        
+               
