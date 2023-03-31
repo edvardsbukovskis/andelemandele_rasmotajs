@@ -5,6 +5,7 @@ import time
 import json
 from datetime import datetime
 import multiprocessing
+from functools import partial
 
 
 
@@ -19,13 +20,13 @@ def get_number_of_pages():
     driver.delete_all_cookies()
     return int(pages)
 
-
 def get_all_links():
     """
     It creates a selenium driver for chrome that accesses website "www.andelemandele.lv" and gets all
     links of sold items and stores them in a list.
     :return: A list of all links of sold items
     """
+    all_links=[]
     pages = 0
     for i in range(1):
         #Create selenium driver for chrome that accesses website "www.andelemandele.lv"
@@ -52,58 +53,33 @@ def get_all_links():
         driver.delete_all_cookies()
     return all_links
 
-def get_sold_product_data(all_links):
-    """
-    It iterates through a list of links, enters each link, scrapes the category data from the item, and
-    saves it to a dictionary.
-    
-    :param all_links: list of links to the items
-    :return: A dictionary with the following structure:
-    {
-        "categories":{
-            "category1 | category2":{
-                "counter": int,
-                "category_prices": [float, float, float, ...]
-            },
-            "category1 | category2":{
-                "counter": int,
-                "category_prices": [float
-    """
-    counter = 0
-    data = {"categories":{}}
+def get_sold_product_data(link, driver_pool):
 
-    for link in all_links:
+    driver = driver_pool.acquire()
+    try:
         driver.get(link)
         time.sleep(0.5)
 
         #Scrape the category data from the item
         soup = BeautifulSoup(driver.page_source, 'html.parser')
+        driver.delete_all_cookies()
+        driver.close()
         try:
             category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
             category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
             price = float(soup.find("span", class_="product__price old-price").text.split(' ')[0])
+            category = f"{category1} | {category2}"
         except:
             with open('error_log.txt', 'a', encoding="utf-8") as f:
                 f.write(f"Local Error occured at get_sold_product_data():{link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
-            continue
-        try:
-            category = f"{category1} | {category2}"
-            if category in data["categories"].keys():
-                data["categories"][category]["counter"] += 1
-                data["categories"][category]["category_prices"].append(price)
-            else:
-                data["categories"][category] = {"counter":1, "category_prices":[price]}
-                
-            print(f"category: {category} added\n")
-            counter += 1
-            print(f"counter: {counter}\n")
-        except:
-            with open('error_log.txt', 'a', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_sold_product_data()->saving to categories: {link}\nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
-            continue
-        driver.delete_all_cookies()
-    print(f"{counter} items added in total\n")
-    return data
+            return None
+        
+        print(f"category: {category} added\n")
+        return (category, price)
+    except Exception as e:
+        driver.quit()
+        raise e
+
 
 
 #----------------------(__main__)----------------------
@@ -111,26 +87,42 @@ def get_sold_product_data(all_links):
 # The above code is a web scraper that is scraping the sold products from the website.
 if __name__ == "__main__":
     start_time = datetime.now()
-    all_links=[]
     options = Options()
     options.headless = True
     driver = webdriver.Chrome(options=options)
     
-    try:
-        all_links = get_all_links()
-        data = get_sold_product_data(all_links)
-        driver.close()
-        
-        #serialize json for a dump
-        data["Runtime"] = str(datetime.now() - start_time)
-        data["Starttime"] = str(start_time)
-        data["Endtime"] = str(datetime.now())
-        json_obj = json.dumps(data, indent=1, ensure_ascii=False)
+    all_links = get_all_links()
+    driver.close()
 
-        with open('result.json', 'a', encoding="utf-8") as f:
-            f.write(json_obj)
+    #Create a multiprocess pool and execute
+    driver_pool = multiprocessing.pool.ThreadPool(processes=4)
+    drivers = [webdriver.Chrome(options=options) for _ in range(4)]
+    results = pool.map(partial(get_sold_product_data, driver_pool=driver_pool), all_links)
+    driver_pool.close()
+    driver_pool.join()
+    for driver in drivers:
+        driver.close()
     
-    except:
-        with open('error_log.txt', 'a', encoding="utf-8") as f:
-            f.write(f"Error occured at __main__: {datetime.now() - start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
-               
+    results_dict = {"categories":{}}
+    for result in results:
+        try:
+            if result is not None:
+                category, price = result
+                if category in results_dict["categories"]:
+                    results_dict["categories"][category]["prices"].append(price)
+                else:
+                    results_dict["categories"][category]={"prices":[price]}
+        except:
+            with open('error_log.txt', 'a', encoding="utf-8") as f:
+                f.write(f"Error saving to dict cat:{category}, price:{price}\n")
+            continue
+        
+    #Add count of how many each category item ther was
+    for category in results_dict["categories"]:
+        results_dict["categories"][category]["count"] = len(results_dict["categories"][category]["prices"])  
+    
+    #Add runtime stamp and datetime stamp to dictionary
+    results_dict["runtime"] = str(datetime.now()-start_time)
+    results_dict["datetime"] = str(datetime.now())
+        
+    print(results_dict)          
