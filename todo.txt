@@ -9,7 +9,7 @@ Done: 28.03.2023: Change hierarchy of dictionary to look like this:
 Done: 27.03.2023: Scrape price of each sold item and save it as a list in subdictionary
 Calculate average price per category
 Collect data about void products, calculate statistics like amount and percentage to all
-Create a file that stores meta info about scrape(all items, void items, percentage...)
-Make appending categories in json file to increase the count in already written dictionary, not creating another set, meaning runtime/datetime information could be converted to metafile
+Create a file that stores meta info about scrape(all items, void items, percentage, runtime, datetime ...)
+Done: 03.04.2023: Make appending categories in json file to increase the count in already written dictionary, not creating another set
 When terminating program save all info that has been gathered
 Done: 31.03.2023: Add multiprocessing

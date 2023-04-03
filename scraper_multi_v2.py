@@ -123,8 +123,15 @@ if __name__ == "__main__":
     webdriver_pool = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
         results = list(executor.map(get_sold_product_data, [(link, webdriver_pool, options) for link in all_links]))
-    
-    results_dict = {"categories": {}}
+
+    # Load the existing JSON file or create an empty dictionary if the file does not exist
+    try:
+        with open('result.json', 'r', encoding="utf-8") as f:
+            results_dict = json.load(f)
+    except FileNotFoundError:
+        results_dict = {"categories": {}}
+
+        # Update the existing dictionary with new data
     for result in results:
         try:
             if result is not None:
@@ -138,14 +145,16 @@ if __name__ == "__main__":
                 f.write(f"Error saving to dict cat:{category}, price:{price}\n")
             continue
 
-    # Add count of how many each category item there was
+    # Add count of how many each category items there are
     for category in results_dict["categories"]:
         results_dict["categories"][category]["count"] = len(results_dict["categories"][category]["prices"])
 
     # Add runtime stamp and datetime stamp to dictionary
     results_dict["runtime"] = str(datetime.now() - start_time)
     results_dict["datetime"] = str(datetime.now())
-    
+
+    # Save the updated dictionary to the JSON file
     json_obj = json.dumps(results_dict, indent=1, ensure_ascii=False)
-    with open('result.json', 'a', encoding="utf-8") as f:
+    with open('result.json', 'w', encoding="utf-8") as f:
         f.write(json_obj)
+
