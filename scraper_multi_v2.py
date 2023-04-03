@@ -25,7 +25,7 @@ def get_all_links():
     """
     all_links=[]
     pages = 0
-    for i in range(1):
+    for i in range(get_number_of_pages()):
         #Create selenium driver for chrome that accesses website "www.andelemandele.lv"
         driver.get(f"https://www.andelemandele.lv/perles/#order:actual/sold:1/page:{i}")
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight - (document.body.scrollHeight - 1))")
