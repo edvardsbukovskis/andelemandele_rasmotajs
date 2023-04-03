@@ -157,4 +157,3 @@ if __name__ == "__main__":
     json_obj = json.dumps(results_dict, indent=1, ensure_ascii=False)
     with open('result.json', 'w', encoding="utf-8") as f:
         f.write(json_obj)
-
