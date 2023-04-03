@@ -4,9 +4,6 @@ from selenium.webdriver.chrome.options import Options
 import time
 import json
 from datetime import datetime
-import multiprocessing
-
-
 
 def get_number_of_pages():
     """
@@ -18,7 +15,6 @@ def get_number_of_pages():
     pages = soup.find("button", class_="btn paging__btn dropdown-toggle").text.split(" ")[-1]
     driver.delete_all_cookies()
     return int(pages)
-
 
 def get_all_links():
     """
