@@ -6,8 +6,6 @@ import json
 from datetime import datetime
 import concurrent.futures
 
-
-
 def get_number_of_pages():
     """
     It gets the number of pages from the website, and returns it as an integer
@@ -53,6 +51,14 @@ def get_all_links():
     return all_links
 
 def get_webdriver_instance(webdriver_pool, options):
+    """
+    If the webdriver_pool is empty, create a new webdriver instance and return it. If the webdriver_pool
+    is not empty, pop the last element from the pool and return it
+    
+    :param webdriver_pool: A list of webdriver instances
+    :param options: This is the ChromeOptions object that we created earlier
+    :return: A webdriver instance
+    """
     if not webdriver_pool:
         driver = webdriver.Chrome(options=options)
         return driver
@@ -60,9 +66,24 @@ def get_webdriver_instance(webdriver_pool, options):
         return webdriver_pool.pop()
 
 def release_webdriver_instance(webdriver_pool, driver):
+    """
+    It takes a webdriver instance and appends it to the webdriver pool
+    
+    :param webdriver_pool: a list of webdriver instances
+    :param driver: The webdriver instance to be released
+    """
     webdriver_pool.append(driver)
 
 def get_sold_product_data(args):
+    """
+    It takes a link, a webdriver pool and some options as arguments, then it gets the webdriver instance
+    from the pool, gets the link, waits for 0.5 seconds, scrapes the category data from the item,
+    deletes all cookies, releases the webdriver instance back to the pool, and returns the category and
+    price
+    
+    :param args: (link, webdriver_pool, options)
+    :return: A tuple of category and price
+    """
     link, webdriver_pool, options = args
 
     driver = get_webdriver_instance(webdriver_pool, options)
@@ -86,22 +107,32 @@ def get_sold_product_data(args):
     print(f"category: {category} added\n")
     return (category, price)
 
+def read_existing_json(filename):
+    try:
+        with open(filename, 'r', encoding="utf-8") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        data = {"categories": {}}
+    return data
+
 
 #----------------------(__main__)----------------------
-
-# The above code is a web scraper that is scraping the sold products from the website.
 if __name__ == "__main__":
     start_time = datetime.now()
+    result_file = 'result.json'
+    results_dict = read_existing_json(result_file)
     options = Options()
     options.headless = True
+    options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
+    workers = 3
 
     all_links = get_all_links()
     driver.close()
 
     # Create a thread pool and execute
     webdriver_pool = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
         results = list(executor.map(get_sold_product_data, [(link, webdriver_pool, options) for link in all_links]))
     
     results_dict = {"categories": {}}
@@ -125,5 +156,7 @@ if __name__ == "__main__":
     # Add runtime stamp and datetime stamp to dictionary
     results_dict["runtime"] = str(datetime.now() - start_time)
     results_dict["datetime"] = str(datetime.now())
-
-    print(results_dict)
+    
+    json_obj = json.dumps(results_dict, indent=1, ensure_ascii=False)
+    with open('result.json', 'a', encoding="utf-8") as f:
+        f.write(json_obj)
