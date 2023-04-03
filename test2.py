@@ -4,8 +4,7 @@ from selenium.webdriver.chrome.options import Options
 import time
 import json
 from datetime import datetime
-import multiprocessing
-from functools import partial
+import concurrent.futures
 
 
 
@@ -53,33 +52,39 @@ def get_all_links():
         driver.delete_all_cookies()
     return all_links
 
-def get_sold_product_data(link, driver_pool):
+def get_webdriver_instance(webdriver_pool, options):
+    if not webdriver_pool:
+        driver = webdriver.Chrome(options=options)
+        return driver
+    else:
+        return webdriver_pool.pop()
 
-    driver = driver_pool.acquire()
+def release_webdriver_instance(webdriver_pool, driver):
+    webdriver_pool.append(driver)
+
+def get_sold_product_data(args):
+    link, webdriver_pool, options = args
+
+    driver = get_webdriver_instance(webdriver_pool, options)
+    driver.get(link)
+    time.sleep(0.5)
+
+    # Scrape the category data from the item
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    driver.delete_all_cookies()
+    release_webdriver_instance(webdriver_pool, driver)
     try:
-        driver.get(link)
-        time.sleep(0.5)
-
-        #Scrape the category data from the item
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        driver.delete_all_cookies()
-        driver.close()
-        try:
-            category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
-            category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
-            price = float(soup.find("span", class_="product__price old-price").text.split(' ')[0])
-            category = f"{category1} | {category2}"
-        except:
-            with open('error_log.txt', 'a', encoding="utf-8") as f:
-                f.write(f"Local Error occured at get_sold_product_data():{link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
-            return None
-        
-        print(f"category: {category} added\n")
-        return (category, price)
-    except Exception as e:
-        driver.quit()
-        raise e
-
+        category1 = soup.find("div", class_="breadcrumb").find_all("a")[-3].text
+        category2 = soup.find("div", class_="breadcrumb").find_all("a")[-2].text
+        price = float(soup.find("span", class_="product__price old-price").text.split(' ')[0])
+        category = f"{category1} | {category2}"
+    except:
+        with open('error_log.txt', 'a', encoding="utf-8") as f:
+            f.write(f"Local Error occured at get_sold_product_data():{link} \nRuntime: {datetime.now()-start_time}\nDatetime: {datetime.now()}\n-----------------------------\n")
+        return None
+    
+    print(f"category: {category} added\n")
+    return (category, price)
 
 
 #----------------------(__main__)----------------------
@@ -90,20 +95,16 @@ if __name__ == "__main__":
     options = Options()
     options.headless = True
     driver = webdriver.Chrome(options=options)
-    
+
     all_links = get_all_links()
     driver.close()
 
-    #Create a multiprocess pool and execute
-    driver_pool = multiprocessing.pool.ThreadPool(processes=4)
-    drivers = [webdriver.Chrome(options=options) for _ in range(4)]
-    results = pool.map(partial(get_sold_product_data, driver_pool=driver_pool), all_links)
-    driver_pool.close()
-    driver_pool.join()
-    for driver in drivers:
-        driver.close()
+    # Create a thread pool and execute
+    webdriver_pool = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        results = list(executor.map(get_sold_product_data, [(link, webdriver_pool, options) for link in all_links]))
     
-    results_dict = {"categories":{}}
+    results_dict = {"categories": {}}
     for result in results:
         try:
             if result is not None:
@@ -111,18 +112,18 @@ if __name__ == "__main__":
                 if category in results_dict["categories"]:
                     results_dict["categories"][category]["prices"].append(price)
                 else:
-                    results_dict["categories"][category]={"prices":[price]}
+                    results_dict["categories"][category] = {"prices": [price]}
         except:
             with open('error_log.txt', 'a', encoding="utf-8") as f:
                 f.write(f"Error saving to dict cat:{category}, price:{price}\n")
             continue
-        
-    #Add count of how many each category item ther was
+
+    # Add count of how many each category item there was
     for category in results_dict["categories"]:
-        results_dict["categories"][category]["count"] = len(results_dict["categories"][category]["prices"])  
-    
-    #Add runtime stamp and datetime stamp to dictionary
-    results_dict["runtime"] = str(datetime.now()-start_time)
+        results_dict["categories"][category]["count"] = len(results_dict["categories"][category]["prices"])
+
+    # Add runtime stamp and datetime stamp to dictionary
+    results_dict["runtime"] = str(datetime.now() - start_time)
     results_dict["datetime"] = str(datetime.now())
-        
-    print(results_dict)          
+
+    print(results_dict)
