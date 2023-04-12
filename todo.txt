@@ -7,7 +7,8 @@ Done 24.03.2023:Make exceptions more specific
 Done: 28.03.2023: Change hierarchy of dictionary to look like this:
         categories:{"cat1":{count:int, price:list}, "cat2":{count":int, price:list}}, Runtime:time:datetime, Datetime:time:datetime, Starttime:time:datetime
 Done: 27.03.2023: Scrape price of each sold item and save it as a list in subdictionary
-Calculate average price per category
+Done: 12.04.2023: Calculate average price per category
+Done: 12.04.2023: Added multiprocessing to get_all_pages() function, to further optimise
 Collect data about void products, calculate statistics like amount and percentage to all
 Create a file that stores meta info about scrape(all items, void items, percentage, runtime, datetime ...)
 Done: 03.04.2023: Make appending categories in json file to increase the count in already written dictionary, not creating another set

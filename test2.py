@@ -17,16 +17,12 @@ def get_number_of_pages():
     driver.delete_all_cookies()
     return int(pages)
 
-def get_all_links():
-    """
-    It creates a selenium driver for chrome that accesses website "www.andelemandele.lv" and gets all
-    links of sold items and stores them in a list.
-    :return: A list of all links of sold items
-    """
-    all_links=[]
-    pages = 0
-    for i in range(1):
-        #Create selenium driver for chrome that accesses website "www.andelemandele.lv"
+def get_all_links(webdriver_pool, options):
+    def fetch_links_for_page(args):
+        i, webdriver_pool, options = args
+        all_links = []
+        driver = get_webdriver_instance(webdriver_pool, options)
+
         driver.get(f"https://www.andelemandele.lv/perles/#order:actual/sold:1/page:{i}")
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight - (document.body.scrollHeight - 1))")
         time.sleep(0.5)
@@ -35,20 +31,28 @@ def get_all_links():
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
         time.sleep(0.5)
 
-        #Get all elements from driver using beautifulsoup which have "article" tag and class "product-card no-user inactive applications thumbnail-ready" and store them in a list
+        # Get all elements from driver using beautifulsoup which have "article" tag and class "product-card no-user inactive applications thumbnail-ready" and store them in a list
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         products = soup.find_all("article", class_="product-card no-user inactive applications thumbnail-ready")
 
-        #Get all links of sold items
+        # Get all links of sold items
         for product in products:
             item = product.find("figure")
             link = item.find("a")
             all_links.append("https://www.andelemandele.lv"+link.get('href'))
-        pages +=1
-        print(f"All items added, pages:{pages} total items:{len(all_links)}\n")
         
         driver.delete_all_cookies()
+        release_webdriver_instance(webdriver_pool, driver)
+        print(f"Page counter: {i}")
+        return all_links
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+        all_links_results = list(executor.map(fetch_links_for_page, [(i, webdriver_pool, options) for i in range(get_number_of_pages())]))
+
+    # Flatten the list of lists to a single list of links
+    all_links = [link for page_links in all_links_results for link in page_links]
     return all_links
+
 
 def get_webdriver_instance(webdriver_pool, options):
     """
@@ -114,16 +118,16 @@ if __name__ == "__main__":
     options.headless = True
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
-    workers = 3
+    workers = 4
 
-    all_links = get_all_links()
-    driver.close()
-
-    # Create a thread pool and execute
     webdriver_pool = []
+    all_links = get_all_links(webdriver_pool, options)
+    
+    # Create a thread pool and execute
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
         results = list(executor.map(get_sold_product_data, [(link, webdriver_pool, options) for link in all_links]))
 
+    # Working with files
     # Load the existing JSON file or create an empty dictionary if the file does not exist
     try:
         with open('result.json', 'r', encoding="utf-8") as f:
@@ -148,6 +152,7 @@ if __name__ == "__main__":
     # Add count of how many each category items there are
     for category in results_dict["categories"]:
         results_dict["categories"][category]["count"] = len(results_dict["categories"][category]["prices"])
+        results_dict["avg_cat_price"] = sum(results_dict["categories"][category]["prices"]) / len(results_dict["categories"][category]["prices"])
 
     # Add runtime stamp and datetime stamp to dictionary
     results_dict["runtime"] = str(datetime.now() - start_time)
@@ -157,4 +162,3 @@ if __name__ == "__main__":
     json_obj = json.dumps(results_dict, indent=1, ensure_ascii=False)
     with open('result.json', 'w', encoding="utf-8") as f:
         f.write(json_obj)
-
